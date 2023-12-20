@@ -1,15 +1,24 @@
-from flask import session
-from src.models.user import User
-from src import db
+from flask import session, abort
+from src.models import User
+from src import repository
 
 
 def get_current_user() -> User | None:
-    if username := session.get("username"):
-        return db.get_user(username)
+    username = session.get("username")
+    if not username:
+        return None
+    return repository.get_user(username)
+
+
+def get_current_user_or_raise() -> User:
+    user = get_current_user()
+    if not user:
+        abort(401)
+    return user
 
 
 def get_user_with_password_check(username: str, password: str) -> User | None:
-    user = db.get_user(username)
+    user = repository.get_user(username)
     if not user:
         return None
     if user.password != password:
